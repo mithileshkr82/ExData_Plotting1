@@ -1,26 +1,32 @@
-# Reading, naming and subsetting power consumption data
-power <- read.table("household_power_consumption.txt",skip=1,sep=";")
-names(power) <- c("Date","Time","Global_active_power","Global_reactive_power","Voltage","Global_intensity","Sub_metering_1","Sub_metering_2","Sub_metering_3")
-subpower <- subset(power,power$Date=="1/2/2007" | power$Date =="2/2/2007")
+two_day<-read.table("household_power_consumption.txt", skip=66637, nrows=2880, sep=";")
+header <- read.table("household_power_consumption.txt", nrows=1,sep=";", stringsAsFactors = FALSE)
+colnames(two_day) <- as.character(header[1,])
 
-# Transforming the Date and Time vars from characters into objects of type Date and POSIXlt respectively
-subpower$Date <- as.Date(subpower$Date, format="%d/%m/%Y")
-subpower$Time <- strptime(subpower$Time, format="%H:%M:%S")
-subpower[1:1440,"Time"] <- format(subpower[1:1440,"Time"],"2007-02-01 %H:%M:%S")
-subpower[1441:2880,"Time"] <- format(subpower[1441:2880,"Time"],"2007-02-02 %H:%M:%S")
+png(filename = "plot4.png", width = 480, height = 480, units="px")
+two_day$POSIXdt <- paste(two_day$Date, two_day$Time)
+two_day$POSIXdt <- strptime(two_day$POSIXdt, format="%d/%m/%Y %H:%M:%S")
 
 
-# initiating a composite plot with many graphs
-par(mfrow=c(2,2))
 
-# calling the basic plot function that calls different plot functions to build the 4 plots that form the graph
-with(subpower,{
-  plot(subpower$Time,as.numeric(as.character(subpower$Global_active_power)),type="l",  xlab="",ylab="Global Active Power")  
-  plot(subpower$Time,as.numeric(as.character(subpower$Voltage)), type="l",xlab="datetime",ylab="Voltage")
-  plot(subpower$Time,subpower$Sub_metering_1,type="n",xlab="",ylab="Energy sub metering")
-  with(subpower,lines(Time,as.numeric(as.character(Sub_metering_1))))
-  with(subpower,lines(Time,as.numeric(as.character(Sub_metering_2)),col="red"))
-  with(subpower,lines(Time,as.numeric(as.character(Sub_metering_3)),col="blue"))
-  legend("topright", lty=1, col=c("black","red","blue"),legend=c("Sub_metering_1","Sub_metering_2","Sub_metering_3"), cex = 0.6)
-  plot(subpower$Time,as.numeric(as.character(subpower$Global_reactive_power)),type="l",xlab="datetime",ylab="Global_reactive_power")
-})
+par(mfcol=c(2,2))
+
+#1st Plot (Plot 2)
+plot(two_day$POSIXdt, two_day$Global_active_power, type="n", xlab = "", ylab = "Global Active Power")
+lines(two_day$POSIXdt, two_day$Global_active_power)
+
+#2nd Plot (Plot 3)
+plot(two_day$POSIXdt, two_day$Sub_metering_1, type="n", xlab = "", ylab = "Energy sub metering")
+lines(two_day$POSIXdt, two_day$Sub_metering_1)
+lines(two_day$POSIXdt, two_day$Sub_metering_2, col="red")
+lines(two_day$POSIXdt, two_day$Sub_metering_3, col="blue")
+legend("topright", c("Sub_metering_1", "Sub_metering_2", "Sub_metereing_3"), lty=c(1,1,1), lwd=c(1, 1), col=c("black", "red", "blue"), bty="n")
+
+#3rd plot
+plot(two_day$POSIXdt, two_day$Voltage, xlab = "datetime", ylab = "Voltage", type="n")
+lines(two_day$POSIXdt, two_day$Voltage)
+
+#4th plot
+plot(two_day$POSIXdt, two_day$Global_reactive_power, xlab = "datetime", ylab = "Global_reactive_power", type="n")
+lines(two_day$POSIXdt, two_day$Global_reactive_power)
+
+dev.off()
